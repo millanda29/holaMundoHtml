@@ -11,7 +11,6 @@ env:
   EC2_HOST: ${{ secrets.EC2_HOST }}       # La IP pública de tu EC2
   EC2_USER: ${{ secrets.EC2_USER }}       # Nombre de usuario en EC2 (por ejemplo: ec2-user o ubuntu)
   EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }} # Llave privada SSH para acceder a la instancia EC2
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
 
 jobs:
   build-deploy:
@@ -33,10 +32,12 @@ jobs:
 
     - name: Build, tag, and push Docker image to Amazon ECR
       run: |
-        # Usamos el tag latest para la imagen
         IMAGE_TAG="latest"
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+        echo "Building Docker image: $IMAGE_URI"
+        docker build -t $IMAGE_URI .
+        docker push $IMAGE_URI
 
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.6
@@ -46,12 +47,20 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+
+          echo "Updating EC2 instance and installing Docker"
           sudo yum update -y
           sudo yum install -y docker
           sudo service docker start
-          sudo docker pull $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+          echo "Pulling Docker image: $IMAGE_URI"
+          sudo docker pull $IMAGE_URI
+
+          echo "Stopping and removing existing container if it exists"
           sudo docker ps -q --filter "name=holamundohtml" | grep -q . && \
           sudo docker stop holamundohtml && \
           sudo docker rm holamundohtml || true
-          sudo docker run -d --name holamundohtml -p 80:80 $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
+          echo "Starting new container"
+          sudo docker run -d --name holamundohtml -p 80:80 $IMAGE_URI
