@@ -6,6 +6,7 @@ on:
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
+  URI_ECR: ${{ secrets.URI_ECR}}
   ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
   EC2_HOST: ${{ secrets.EC2_HOST }}       # La IP pública de tu EC2
@@ -47,7 +48,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
-          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+          IMAGE_URI="$URI_ECR:latest"
 
           echo "Updating EC2 instance and installing Docker"
           sudo yum update -y
