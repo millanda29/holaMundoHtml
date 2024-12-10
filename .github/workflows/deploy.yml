@@ -6,6 +6,7 @@ on:
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
   EC2_HOST: ${{ secrets.EC2_HOST }}       # La IP pública de tu EC2
   EC2_USER: ${{ secrets.EC2_USER }}       # Nombre de usuario en EC2 (por ejemplo: ec2-user o ubuntu)
